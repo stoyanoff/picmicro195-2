@@ -51,13 +51,17 @@
 #include "mcc_generated_files/serial1.h"
 #include "mcc_generated_files/traps.h"
 #include "mcc_generated_files/uart1.h"
+#include "mcc_generated_files/interrupt_manager.h"
 #include "libpic30.h"
 #include "string.h"
 
 
 //Manual functions
 
-
+    uint8_t incoming_seq[7];
+    int count = 0;
+    int counter = 0;
+    char temp;
 //uart transmit entire string function
 void UART1TransmitBytes (uint8_t *tx_str){
     uint8_t ch;
@@ -67,8 +71,14 @@ void UART1TransmitBytes (uint8_t *tx_str){
         tx_str++;
     }
 }
-
-
+//Redefine callback function for UART1 receive interrupt
+void UART1_Receive_CallBack(void){
+    count=0;
+    while (UART1_IsRxReady()){
+        incoming_seq[count]=UART1_Read();
+        count++;
+    }
+}
 
 
 /*
@@ -79,21 +89,49 @@ int main(void)
     // initialize the device
     SYSTEM_Initialize();
     SERIAL1_Initialize();
+    INTERRUPT_Initialize();
+    INTERRUPT_GlobalEnable();
     
     UART1TransmitBytes("Start debug session\r\n");
     __delay_ms(500);
+    
 
-    while (1)
-    {
-        if (UART1_Read()==0x61){
-            UART1_Write(0x4F);
-            UART1_Write(0x4B);
-            UART1_Write(0x0A);
-            UART1_Write(0x0D);
-        }
+    
+    
+    
+    while (1) {
+
         
-    }
+        
+        
+        
+//        do {
+//        incoming_seq[count]=UART1_Read();
+//        }
+//        while (UART1_RX_DATA_AVAILABLE==1);
 
+//    count = UART1_ReceiveBufferSizeGet();
+//    if (UART1_IsRxReady())
+//    {
+//        count = UART1_ReceiveBufferSizeGet();
+//        incoming_seq[count]=UART1_Read();
+//        counter++;
+//    }
+//    if (count>0) {
+//    UART1TransmitBytes('Receiver OK');
+//    }
+//    {
+//        if ((incoming_seq[0]==0x61)&&(incoming_seq[1]==0x61)){
+//            UART1_Write(0x4F);
+//            UART1_Write(0x4B);
+//            UART1_Write(0x0A);
+//            UART1_Write(0x0D);
+//        }
+//        
+//    }
+        
+}
+        
     return 0;
 }
 /**
