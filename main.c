@@ -57,9 +57,14 @@
 
 
 //Manual functions
-    uint8_t incoming_seq[7];
-    uint8_t asic_command[7];
+    uint8_t incoming_seq[9];
+    uint8_t asic_command[9];
+    uint8_t read_seq[2]={0x61, 0x61};
+    uint8_t write_seq[2]={0x06, 0x01};
     uint8_t count = 0;
+    uint8_t bingo_array[6]=    {0x42, 0x69, 0x6e, 0x67, 0x6f, 0x00};
+    int res = 0;
+    int buff = 0;
     int counter = 0;
     char temp;
     char Rx1buffer;
@@ -74,14 +79,31 @@ void UART1TransmitBytes (uint8_t *tx_str){
     }
 }
 //Redefine callback function for UART1 receive interrupt
-void UART1_Receive_CallBack(void){
+//void UART1_Receive_CallBack(void){
+//    do {
+//       incoming_seq[count]=UART1_Read();
+//        count++;
+//    } while (UART1_IsRxReady());
+//    
 
-    for (count=0; count<8;count++)
-    while (UART1_IsRxReady()) {
-       incoming_seq[count]=UART1_Read();
-        count++;
-//    } 
-    
+//}
+
+void ASIC_SerialRead(void){
+    //int i=0;
+//    for (int i=0; sizeof(bingo_array); i++){
+//        UART1_Write(bingo_array[i]);
+    UART1TransmitBytes(bingo_array);
+//    }
+    return 0;
+}
+
+void ASIC_SerialWrite(void){
+    //int i=0;
+//    for (int i=0; sizeof(bingo_array); i++){
+//        UART1_Write(bingo_array[i]);
+    UART1_Write(0x48);
+//    }
+    return 0;
 }
 
 
@@ -89,35 +111,54 @@ void UART1_Receive_CallBack(void){
                          Main application
  */
 int main(void)
-{
+{   
     // initialize the device
     SYSTEM_Initialize();
     SERIAL1_Initialize();
-    INTERRUPT_Initialize();
-    INTERRUPT_GlobalEnable();
     
-    UART1TransmitBytes("Start debug session\r\n");
-    __delay_ms(500);
-    
-
-    
-    
-    
+ //   INTERRUPT_GlobalEnable();
+//  Endless loop
     while (1) {
-        __delay_ms(1500);
-        memcpy(asic_command,incoming_seq, sizeof(asic_command));
-        UART1_Write(asic_command[0]);
-        //UART1_Write(count);
-        if (asic_command[0]!=0){
-            INTERRUPT_GlobalDisable();
-            memset(incoming_seq,0,sizeof(incoming_seq));
-            UART1_Write(uint8_t('z'));
-            __delay_ms(1500);
-            count=0;
-            INTERRUPT_GlobalEnable();
+//      __delay_ms(5000);
+        count=0;
+//      Reading UART if is is not empty  
+        if (!UART1_ReceiveBufferIsEmpty()) {
+            //if (UART1_IsRxReady()) {
+                buff = UART1_ReceiveBufferSizeGet();
+                for (count=0; count<10; count++){
+                    incoming_seq[count]=UART1_Read();
+                }
+            //} 
         }
-    }
+//      Incoming sequence array contains command from PC software
+//      Copy incoming sequance to asic_command array for further manipulation  
+        memcpy(asic_command,incoming_seq, sizeof(asic_command));
+//      Empty incoming sequence array for next command        
+//        memset(incoming_seq,0,sizeof(incoming_seq));
+        __delay_ms(1500);
+        if (asic_command[0]!=0) {
+//      Begin handling asic command
+        res = memcmp(asic_command, read_seq,2);
+        if (res ==0){
+             ASIC_SerialRead();
+        }
+        res = memcmp(asic_command, write_seq,2);
+        if (res == 0){
+             ASIC_SerialWrite();
+        }        
+//        if ((asic_command[0]==0x61)&&(asic_command[1]==0x61)) {
+//            ASIC_SerialRead();
+//        }
+//        if ((asic_command[0]==0x06)&&(asic_command[1]==0x01)) {
+//            ASIC_SerialWrite();    
+//        }
         
+        
+        
+        
+        }
+        memset(asic_command,0,sizeof(asic_command));
+    }
     return 0;
 }
 /**

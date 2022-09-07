@@ -220,6 +220,18 @@
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
       </C30Global>
+      <Tool>
+        <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="memories.programmemory.ranges" value="0-abfb"/>
+        <property key="programmerToGoFilePath"
+                  value="D:/Libraries/Documents/PICMicro/195-2.X/debug/default/195-2_ptg"/>
+      </Tool>
+      <pk4hybrid>
+        <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="memories.programmemory.ranges" value="0-abfb"/>
+        <property key="programmerToGoFilePath"
+                  value="D:/Libraries/Documents/PICMicro/195-2.X/debug/default/195-2_ptg"/>
+      </pk4hybrid>
     </conf>
   </confs>
 </configurationDescriptor>

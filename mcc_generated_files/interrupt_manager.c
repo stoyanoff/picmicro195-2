@@ -65,10 +65,10 @@ void INTERRUPT_Initialize (void)
     //    Priority: 1
         IPC16bits.U1ERIP = 1;
     //    UTXI: U1TX - UART1 Transmitter
-    //    Priority: 1
-        IPC3bits.U1TXIP = 1;
+    //    Priority: 4
+        IPC3bits.U1TXIP = 4;
     //    URXI: U1RX - UART1 Receiver
-    //    Priority: 1
-        IPC2bits.U1RXIP = 1;
+    //    Priority: 4
+        IPC2bits.U1RXIP = 4;
 
 }
