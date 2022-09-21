@@ -50,10 +50,10 @@
 #pragma config IOL1WAY = ON    //IOLOCK Protection->Once IOLOCK is set, cannot be changed
 #pragma config OSCIOFNC = ON    //Primary Oscillator Output Function->OSC2/CLKO/RC15 functions as port I/O (RC15)
 #pragma config FCKSM = CSDCMD    //Clock Switching and Monitor->Clock switching and Fail-Safe Clock Monitor are disabled
-#pragma config FNOSC = PRIPLL    //Oscillator Select->Primary Oscillator with PLL module (HSPLL, ECPLL)
+#pragma config FNOSC = PRI    //Oscillator Select->Primary Oscillator (XT, HS, EC)
 #pragma config SOSCSEL = SOSC    //Sec Oscillator Select->Default Secondary Oscillator (SOSC)
 #pragma config WUTSEL = LEG    //Wake-up timer Select->Legacy Wake-up Timer
-#pragma config IESO = ON    //Internal External Switch Over Mode->IESO mode (Two-Speed Start-up) enabled
+#pragma config IESO = OFF    //Internal External Switch Over Mode->IESO mode (Two-Speed Start-up) disabled
 
 // CONFIG1
 #pragma config WDTPS = PS32768    //Watchdog Timer Postscaler->1:32768
@@ -70,15 +70,15 @@
 #include "clock.h"
 #include "system.h"
 #include "uart2.h"
-#include "uart1.h"
 #include "interrupt_manager.h"
 #include "traps.h"
+#include "uart1.h"
 
 void SYSTEM_Initialize(void)
 {
     PIN_MANAGER_Initialize();
-    INTERRUPT_Initialize();
     CLOCK_Initialize();
+    INTERRUPT_Initialize();
     UART2_Initialize();
     UART1_Initialize();
 }

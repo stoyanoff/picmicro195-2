@@ -42,7 +42,7 @@
     TERMS.
 */
 #ifndef FCY
-#define FCY  29491200UL
+#define FCY  3686400UL//29491200UL
 #endif
 /**
   Section: Included Files
@@ -57,7 +57,7 @@
 
 
 //Manual functions
-    uint8_t incoming_seq[9];
+    uint8_t incoming_seq[20];
     uint8_t asic_command[9];
     uint8_t read_seq[2]={0x61, 0x61};
     uint8_t write_seq[2]={0x06, 0x01};
@@ -79,31 +79,30 @@ void UART1TransmitBytes (uint8_t *tx_str){
     }
 }
 //Redefine callback function for UART1 receive interrupt
-//void UART1_Receive_CallBack(void){
-//    do {
-//       incoming_seq[count]=UART1_Read();
-//        count++;
-//    } while (UART1_IsRxReady());
-//    
+void UART1_Receive_CallBack(void){
+//    while (UART1_IsRxReady()){
+//       incoming_seq[count++]=UART1_Read();
+//       if (count>300){count=0;}
+    char ch;
 
-//}
+    _U1RXIF = 0;
+    ch = U1RXREG;
+
+    incoming_seq[count++] = ch;
+
+    if (count > 20)count = 0;
+    
+}
 
 void ASIC_SerialRead(void){
-    //int i=0;
-//    for (int i=0; sizeof(bingo_array); i++){
-//        UART1_Write(bingo_array[i]);
-    UART1TransmitBytes(bingo_array);
-//    }
-    return 0;
+    
+    //Function to serial read parameters from ASIC via serial
+    //IO5 need to provide 7 pulses with length of 100uS each
+    
 }
 
 void ASIC_SerialWrite(void){
-    //int i=0;
-//    for (int i=0; sizeof(bingo_array); i++){
-//        UART1_Write(bingo_array[i]);
-    UART1_Write(0x48);
-//    }
-    return 0;
+//Function to serial write parameters to ASIC via serial
 }
 
 
@@ -115,53 +114,31 @@ int main(void)
     // initialize the device
     SYSTEM_Initialize();
     SERIAL1_Initialize();
-    
- //   INTERRUPT_GlobalEnable();
+    INTERRUPT_GlobalEnable();
 //  Endless loop
     while (1) {
-//      __delay_ms(5000);
-        count=0;
-//      Reading UART if is is not empty  
-        if (!UART1_ReceiveBufferIsEmpty()) {
-            //if (UART1_IsRxReady()) {
-                buff = UART1_ReceiveBufferSizeGet();
-                for (count=0; count<10; count++){
-                    incoming_seq[count]=UART1_Read();
-                }
-            //} 
-        }
-//      Incoming sequence array contains command from PC software
-//      Copy incoming sequance to asic_command array for further manipulation  
-        memcpy(asic_command,incoming_seq, sizeof(asic_command));
-//      Empty incoming sequence array for next command        
-//        memset(incoming_seq,0,sizeof(incoming_seq));
-        __delay_ms(1500);
-        if (asic_command[0]!=0) {
+//      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
+
 //      Begin handling asic command
-        res = memcmp(asic_command, read_seq,2);
-        if (res ==0){
-             ASIC_SerialRead();
-        }
-        res = memcmp(asic_command, write_seq,2);
-        if (res == 0){
-             ASIC_SerialWrite();
+        if (count == 2){
+//      Incoming sequence array contains command from PC software and data for ASIC
+//      Copy incoming sequence to asic_command array for further manipulation  
+            memcpy(asic_command,incoming_seq, sizeof(asic_command));            
+            if ((asic_command[0]==0x61) && (asic_command[1]==0x61)){
+                ASIC_SerialRead();
+            }
+            if ((asic_command[0]==0x06) && (asic_command[1]==0x01)){
+            ASIC_SerialWrite();
+            }
+            count=0;
+
+//      Empty incoming sequence array for next command                    
+            memset(incoming_seq,0,sizeof(incoming_seq));
         }        
-//        if ((asic_command[0]==0x61)&&(asic_command[1]==0x61)) {
-//            ASIC_SerialRead();
-//        }
-//        if ((asic_command[0]==0x06)&&(asic_command[1]==0x01)) {
-//            ASIC_SerialWrite();    
-//        }
-        
-        
-        
-        
-        }
-        memset(asic_command,0,sizeof(asic_command));
-    }
-    return 0;
-}
-/**
+
+    }; //end of Loop
+}; //End of main
+    /**
  End of File
 */
 

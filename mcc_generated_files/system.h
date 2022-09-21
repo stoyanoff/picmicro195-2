@@ -43,7 +43,7 @@
 */
 
 #ifndef _XTAL_FREQ
-#define _XTAL_FREQ  29491200UL
+#define _XTAL_FREQ  7372800UL //29491200UL
 #endif
 
 //#include "libpic30.h"

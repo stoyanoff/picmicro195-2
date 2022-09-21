@@ -60,8 +60,8 @@
    </usedClasses>
    <usedLibraries class="java.util.ArrayList">
       <ILibraryFile class="com.microchip.mcc.core.library.BaseLibraryFile" libraryClass="com.microchip.mcc.mcu16.Mcu16PeripheralLibrary" version="1.171.1"/>
-      <ILibraryFile class="com.microchip.mcc.core.library.BaseLibraryFile" libraryClass="com.microchip.mcc.foundationservices.library.FoundationServicesLibrary" version="0.2.3"/>
       <ILibraryFile class="com.microchip.mcc.core.library.BaseLibraryFile" libraryClass="com.microchip.mcc.boardsupportlibrary.BoardSuppportLibrary" version="1.12.0"/>
+      <ILibraryFile class="com.microchip.mcc.core.library.BaseLibraryFile" libraryClass="com.microchip.mcc.foundationservices.library.FoundationServicesLibrary" version="0.2.3"/>
    </usedLibraries>
    <tokenMap class="java.util.TreeMap">
       <entry>
@@ -78,11 +78,11 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="CLOCK_FOSC"/>
-         <value>29491200</value>
+         <value>7372800</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="CLOCK_FOSC2"/>
-         <value>14745600</value>
+         <value>3686400</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="CLOCK_FRC"/>
@@ -294,11 +294,11 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="PllClock"/>
-         <value>29491200</value>
+         <value/>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="PllEnable"/>
-         <value>enabled</value>
+         <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="INTERNAL OSCILLATOR" name="Pll_Dependent_Clock_Switching"/>
@@ -990,7 +990,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCCON"/>
-         <value>768</value>
+         <value>512</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCTUN"/>
@@ -1042,7 +1042,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCCON" settingAlias="NOSC"/>
-         <value>PRIPLL</value>
+         <value>PRI</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCCON" settingAlias="OSWEN"/>
@@ -3806,7 +3806,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="System Module" registerAlias="CONFIG2"/>
-         <value>64405</value>
+         <value>31381</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="CONFIG1" settingAlias="BKBUG"/>
@@ -3850,7 +3850,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="CONFIG2" settingAlias="FNOSC"/>
-         <value>PRIPLL</value>
+         <value>PRI</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="CONFIG2" settingAlias="I2C1SEL"/>
@@ -3858,7 +3858,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="CONFIG2" settingAlias="IESO"/>
-         <value>ON</value>
+         <value>OFF</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="CONFIG2" settingAlias="IOL1WAY"/>
@@ -3902,7 +3902,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART1" name="InternalClock"/>
-         <value>14745600</value>
+         <value>3686400</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART1" name="Parity"/>
@@ -4162,7 +4162,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART1" registerAlias="UBRG"/>
-         <value>383</value>
+         <value>95</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART1" registerAlias="UMODE"/>
@@ -4182,7 +4182,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART1" registerAlias="UBRG" settingAlias="BRG"/>
-         <value>383</value>
+         <value>95</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART1" registerAlias="UERI" settingAlias="context"/>
@@ -4354,7 +4354,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="InternalClock"/>
-         <value>14745600</value>
+         <value>3686400</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="Parity"/>
@@ -4610,7 +4610,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART2" registerAlias="UBRG"/>
-         <value>383</value>
+         <value>95</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART2" registerAlias="UMODE"/>
@@ -4630,7 +4630,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="UBRG" settingAlias="BRG"/>
-         <value>383</value>
+         <value>95</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="UERI" settingAlias="enable"/>
@@ -4791,12 +4791,12 @@
    </tokenMap>
    <generatedFileHashHistoryMap class="java.util.HashMap">
       <entry>
-         <file>mcc_generated_files\interrupt_manager.h</file>
-         <hash>f72dfded005b45317b216c4136ecb967b69e3c9a26b56bfd7e3c9e6d3b789a43</hash>
+         <file>mcc_generated_files\mcc.h</file>
+         <hash>56b832bff3bf7e4650921934f31b1ece9918dc2e28baa57eda146773753d8d8f</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\mcc.h</file>
-         <hash>0b426e5f47fb93b089787f4f08a10406cbb107142df0e9208b67d320bb7c1f95</hash>
+         <file>mcc_generated_files\interrupt_manager.h</file>
+         <hash>f72dfded005b45317b216c4136ecb967b69e3c9a26b56bfd7e3c9e6d3b789a43</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\uart2.h</file>
@@ -4808,11 +4808,11 @@
       </entry>
       <entry>
          <file>mcc_generated_files\uart1.c</file>
-         <hash>c17d0a0e8ed44a4519e5d572a09b8b145d1a1fdfd21eda469f9dc0c53cdd6734</hash>
+         <hash>1e9242a01fe96c993150848a11f2d82938a1511f87b3eb701a54f08765ca61c1</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\clock.c</file>
-         <hash>f6667835761d5fee5eeb5d4c6d315411be4e016cc154cdc9d7f915a855f4d102</hash>
+         <hash>ea8d3f51d7dab1f913c7af4484c55e4f8935f509f7ece8c92537fec3a400c4d5</hash>
       </entry>
       <entry>
          <file>main.c</file>
@@ -4820,23 +4820,23 @@
       </entry>
       <entry>
          <file>mcc_generated_files\uart2.c</file>
-         <hash>292b52db5041636ec12cc74a28df5a6ea419cee2ed194557427ae338fc7d5cb2</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\serial1.h</file>
-         <hash>f4b933d1b036c5930565efe7fb31a3049da1d9bd31d756a765f73920ec5f06c2</hash>
+         <hash>2ab27ae428ae812461c4ee9d3a48215b0dc2d01e5d1aa62d3b791d3bb2c93d91</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\pin_manager.h</file>
          <hash>cd1be5243089147e384c6104100f3799a6f8b4e4af71fb6e05df72c6a8ff24bd</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\system.h</file>
-         <hash>e7fcd2e57c1950ddaffd9a55c86da209a1983d5d4644f7c32ad581293e03f20d</hash>
+         <file>mcc_generated_files\serial1.h</file>
+         <hash>f4b933d1b036c5930565efe7fb31a3049da1d9bd31d756a765f73920ec5f06c2</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\pin_manager.c</file>
          <hash>2d1c9475de30301a7689abec41ab962ef3b0803b74f5ee35e2b6fb429dd4f99f</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system.h</file>
+         <hash>0413c5419f2a0c33f46f8dc7fe243573a26b6a04bb6a2ab33b14b922a8306ffa</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\serial1.c</file>
@@ -4844,27 +4844,27 @@
       </entry>
       <entry>
          <file>mcc_generated_files\system.c</file>
-         <hash>27f5ebfa9f0ca1014ef83c6e393d3beec38a8bd7c433483408487f2066872429</hash>
+         <hash>45939501b9fe799d6170b74171f0602b5c651abc38c3a2aedcc3aec1cba33387</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\traps.c</file>
          <hash>2f74b6f3b27a756c49702e994e6621421fba6a57df3327703b8ee77bac6d560a</hash>
       </entry>
       <entry>
+         <file>mcc_generated_files\clock.h</file>
+         <hash>b6922e640dedb6b3a7bc6a116c5e5e05a7b040a766022595c89c8b91af4ef808</hash>
+      </entry>
+      <entry>
          <file>mcc_generated_files\traps.h</file>
          <hash>4c1fd491c1aa9ea12e867221a7f57a53d25b5ca74f9086b37d7124b0b89c9303</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\clock.h</file>
-         <hash>0ab012ca6d9519c0e4c0b61bfd3049cf334a664abb62ebc2f71dfad02f930737</hash>
+         <file>mcc_generated_files\mcc.c</file>
+         <hash>7f4bc8dd018854f4f602b894147071a8ef8099f742ffc1f1e2b42e5742d66452</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\interrupt_manager.c</file>
          <hash>3e7d4bf62e095ae748880a89e4ee610ea817578db3f32ed134c8e34104fa5236</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\mcc.c</file>
-         <hash>7f4bc8dd018854f4f602b894147071a8ef8099f742ffc1f1e2b42e5742d66452</hash>
       </entry>
    </generatedFileHashHistoryMap>
 </config>
