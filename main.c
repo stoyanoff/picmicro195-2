@@ -79,37 +79,36 @@ void UART1TransmitBytes (uint8_t *tx_str){
     }
 }
 
-//Enter specific test mode
+//Enter specific test mode, number ot the mode as parameter
+//IO8/RB7 need to provide 7 pulses with length of 100uS each
 void ASIC_EnterTestMode(uint8_t mode){
     for (int i=1; i<=mode; i++){
-    PORTBbits.RB2=1;
-    __delay_us(99);
-    PORTBbits.RB2=0;
-    __delay_us(17);
-    }
+//      RB8 is the data clock source
+        LATBbits.LATB7=1;  //Page 22
+        __delay_us(100);   //min PW3 = 100uS
+        LATBbits.LATB7=0;
+        __delay_us(20);    //min T2 = 120uS
+        }
     return 0;
 }
 //Redefine callback function for UART1 receive interrupt
 void UART1_Receive_CallBack(void){
-//    while (UART1_IsRxReady()){
-//       incoming_seq[count++]=UART1_Read();
-//       if (count>300){count=0;}
     char ch;
-
     _U1RXIF = 0;
     ch = U1RXREG;
-
     incoming_seq[count++] = ch;
-
     if (count > 20)count = 0;
     
 }
 
+
+//Function to serial read parameters from ASIC via serial
+//After entering test mode 7, IO6RB3 need to provide clock with period min 20uS
+//and pulse width of 10uS, while IO10/RB11 need to provide pulses for each 1 in the bytes    
 void ASIC_SerialRead(void){
-    ASIC_EnterTestMode(7);
+    ASIC_EnterTestMode(7); //Call test mode 7
     
-    //Function to serial read parameters from ASIC via serial
-    //IO5 need to provide 7 pulses with length of 100uS each
+
     
 }
 
@@ -127,6 +126,7 @@ int main(void)
     SYSTEM_Initialize();
     SERIAL1_Initialize();
     INTERRUPT_GlobalEnable();
+    
 //  Endless loop
     while (1) {
 //      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
@@ -137,7 +137,9 @@ int main(void)
 //      Copy incoming sequence to asic_command array for further manipulation  
             memcpy(asic_command,incoming_seq, sizeof(asic_command));            
             if ((asic_command[0]==0x61) && (asic_command[1]==0x61)){
+                LATBbits.LATB11=1;  //Power up the ASIC
                 ASIC_SerialRead();
+                LATBbits.LATB11=0;  //Power down the ASIC
             }
             if ((asic_command[0]==0x06) && (asic_command[1]==0x01)){
             ASIC_SerialWrite();
