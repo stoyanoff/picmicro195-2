@@ -78,6 +78,17 @@ void UART1TransmitBytes (uint8_t *tx_str){
         tx_str++;
     }
 }
+
+//Enter specific test mode
+void ASIC_EnterTestMode(uint8_t mode){
+    for (int i=1; i<=mode; i++){
+    PORTBbits.RB2=1;
+    __delay_us(99);
+    PORTBbits.RB2=0;
+    __delay_us(17);
+    }
+    return 0;
+}
 //Redefine callback function for UART1 receive interrupt
 void UART1_Receive_CallBack(void){
 //    while (UART1_IsRxReady()){
@@ -95,6 +106,7 @@ void UART1_Receive_CallBack(void){
 }
 
 void ASIC_SerialRead(void){
+    ASIC_EnterTestMode(7);
     
     //Function to serial read parameters from ASIC via serial
     //IO5 need to provide 7 pulses with length of 100uS each
