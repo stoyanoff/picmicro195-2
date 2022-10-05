@@ -56,6 +56,7 @@
 /**
   Section: Included Files
 */
+#include "xc.h"
 #include "mcc_generated_files/system.h"
 #include "mcc_generated_files/serial1.h"
 #include "mcc_generated_files/traps.h"
@@ -63,6 +64,7 @@
 #include "mcc_generated_files/interrupt_manager.h"
 #include "mcc_generated_files/pin_manager.h"
 #include "libpic30.h"
+#include "stdlib.h"
 #include "string.h"
 
 
@@ -82,7 +84,7 @@
 //    int res = 0;
 //    int buff = 0;
     uint8_t count = 0;
-//    char temp;
+    char temp[8];
 //    char Rx1buffer;
 
 //Timer1 Interrupt CallBack function    
@@ -124,30 +126,56 @@ void UART1_Receive_CallBack(void){
 
 }
 
+//void UART1_Transmit_CallBack (void) {
+//    for (int i=1; i<=8;i++){
+//                //RB3 is FEED        
+//                FEED_SetHigh();
+//                __delay_us(17);
+//                FEED_SetLow();
+//                __delay_us(20);
+//                }
+//}
+
 
 //Function to serial read parameters from ASIC via serial
 //After entering test mode 7, IO6RB3 need to provide clock with period min 20uS
 //and pulse width of 10uS, while IO10/RB11 need to provide pulses for each 1 in the bytes    
 void ASIC_SerialRead(void){
+    uint8_t pin_status;
+    int dec_value;
+    int base_value = 1;
     ASIC_VDD_SetHigh();//Power up the ASIC
-    __delay_ms(25);
-    VBST_SetHigh();
-    __delay_ms(25);
+    __delay_ms(25);  //wait to stabilize Vdd
+    VBST_SetHigh();  //5V to pin Vbst
+    __delay_ms(25);  //wait to stabilize Vbst
     ASIC_EnterTestMode(7); //Call test mode 7
-    __delay_us(100);
-    for (int c=1; c<=6;c++){
+    __delay_us(100); //as per datasheet
+    UART1_Write(0x44);//Response to the PC always start with 0x44
+    for (int c=1; c<=6;c++){ //ASIC's config word is 44 bits, so nearest byte count is 6
         for (int i=1; i<=8;i++){
-    //RB3 is FEED        
+            //need to pulse FEED pin 8 times to collect 8 bits to form 1 byte
+            //RB3 is FEED        
             FEED_SetHigh();
+            pin_status=HB_GetValue(); //Get value on pin HB
             __delay_us(17);
             FEED_SetLow();
             __delay_us(20);
-            }
-        __delay_ms(1);
-    }
+            dec_value +=base_value*pin_status; //converting binary to decimal value
+            base_value=base_value*2; //2^î
+        }
+        UART1_Write(dec_value);  //Send current byte
+        //start over for next byte
+        dec_value=0;
+        base_value = 1; //2^0=1
+        while (U1STAbits.TRMT==0) { //but wait until current byte is sent
+            Nop();
+        }
+}       
+        
     ASIC_VDD_SetLow(); //Power off the ASIC
     SW1_SetLow();//TEST2 to VSS
-}
+    }
+
 
 void ASIC_SerialWrite(void){
 //Function to serial write parameters to ASIC via serial
@@ -161,11 +189,11 @@ int main(void)
 {   
     // initialize the device
     SYSTEM_Initialize();
-    SERIAL1_Initialize();
     INTERRUPT_GlobalEnable();
-    SW1_SetLow();
-    FEED_SetLow();
-//    ASIC_VDD_SetHigh(); //Power up the ASIC
+    SERIAL1_Initialize();
+
+    SW1_SetLow();  //Pin TEST2 set low
+    FEED_SetLow(); //Pin FEED set low
 //  Endless loop
     while (1) {
 //      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
@@ -187,7 +215,7 @@ int main(void)
 //      Empty incoming sequence array for next command                    
             memset(incoming_seq,0,sizeof(incoming_seq));
 
-        ASIC_VDD_SetLow();
+        ASIC_VDD_SetLow(); //Power down Vdd, just in case
 
     }; //end of Loop
 }; //End of main
