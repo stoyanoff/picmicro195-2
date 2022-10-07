@@ -79,6 +79,7 @@
 //sequencing income commands    
     uint8_t read_seq[2]={0x61, 0x61};
     uint8_t write_seq[2]={0x06, 0x01};
+    uint8_t data_to_write[6];
 //    uint8_t tmr1_count = 0;
 //    uint8_t bingo_array[6]=    {0x42, 0x69, 0x6e, 0x67, 0x6f, 0x00};
 //    int res = 0;
@@ -91,6 +92,22 @@
 //    void TMR1_CallBack(void){
 //        tmr1_count++;
 //    }
+
+//A function to convert int hex to string of "0" and "1"
+char *int2bin(int num, int pad)  //need int to convert and number of bits
+{
+ char *str = malloc(sizeof(char) * (pad+1));
+  if (str) {
+   str[pad]='\0';
+   while (--pad>=0) {
+    str[pad] = num & 1 ? '1' : '0';
+    num >>= 1;  //bit shift right
+   }
+  } else {
+   return "";
+  }
+ return str;
+}    
     
 //uart transmit entire string function
 void UART1TransmitBytes (uint8_t *tx_str){
@@ -125,17 +142,6 @@ void UART1_Receive_CallBack(void){
     if (count > 20)count = 0;
 
 }
-
-//void UART1_Transmit_CallBack (void) {
-//    for (int i=1; i<=8;i++){
-//                //RB3 is FEED        
-//                FEED_SetHigh();
-//                __delay_us(17);
-//                FEED_SetLow();
-//                __delay_us(20);
-//                }
-//}
-
 
 //Function to serial read parameters from ASIC via serial
 //After entering test mode 7, IO6RB3 need to provide clock with period min 20uS
@@ -173,12 +179,44 @@ void ASIC_SerialRead(void){
 }       
         
     ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
     }
 
 
 void ASIC_SerialWrite(void){
+    uint8_t buffer_count = 0;
 //Function to serial write parameters to ASIC via serial
+    ASIC_VDD_SetHigh();//Power up the ASIC
+    __delay_ms(25);  //wait to stabilize Vdd
+    VBST_SetHigh();  //5V to pin Vbst
+    __delay_ms(25);  //wait to stabilize Vbst
+    ASIC_EnterTestMode(7); //Call test mode 7
+    __delay_us(100); //as per datasheet
+    for (int byte_number=2; byte_number<=7; byte_number++){  //Get byte from the array with data
+        for (int BitNumber=7; BitNumber>=0; BitNumber-- ){  //Get each single bit of the current byte
+            FEED_SetHigh();
+            if (((asic_command[byte_number]>>BitNumber) & 1) && (buffer_count<=44)) {  //if bit is 1, TEST data set to HIGH
+                TEST3_3_SetHigh();
+            }
+            else {  //else TEST data is 0
+                TEST3_3_SetLow();
+            }
+            __delay_us(17);
+            FEED_SetLow();
+            __delay_us(20);            
+            buffer_count++;  //need to save 44 bits, but 6 bytes are 48, so we are stop writing at bit 44 
+        }
+    }
+    __delay_us(300);
+    IO_SetHigh();   //Latch data to ASIC's memory
+    __delay_ms(40);
+    IO_SetLow();
+    UART1_Write(0x4b);  //Let PC knows data are saved
+    
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow() //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
 }
 
 
@@ -199,7 +237,7 @@ int main(void)
 //      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
         __delay_ms(30);
 //      Begin handling asic command
-        if (count == 2){
+        if ((count == 2)||(count==8)){
 //      Incoming sequence array contains command from PC software and data for ASIC
 //      Copy incoming sequence to asic_command array for further manipulation  
             memcpy(asic_command,incoming_seq, sizeof(asic_command));            
@@ -207,7 +245,10 @@ int main(void)
                 ASIC_SerialRead();
             }
             if ((asic_command[0]==0x06) && (asic_command[1]==0x01)){
-            ASIC_SerialWrite();
+                for (int i=2; i<=8;i++ ){
+                    data_to_write[i-2]=asic_command[i];
+                }
+                ASIC_SerialWrite();
             }
             
         }
