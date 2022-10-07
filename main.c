@@ -92,22 +92,6 @@
 //    void TMR1_CallBack(void){
 //        tmr1_count++;
 //    }
-
-//A function to convert int hex to string of "0" and "1"
-char *int2bin(int num, int pad)  //need int to convert and number of bits
-{
- char *str = malloc(sizeof(char) * (pad+1));
-  if (str) {
-   str[pad]='\0';
-   while (--pad>=0) {
-    str[pad] = num & 1 ? '1' : '0';
-    num >>= 1;  //bit shift right
-   }
-  } else {
-   return "";
-  }
- return str;
-}    
     
 //uart transmit entire string function
 void UART1TransmitBytes (uint8_t *tx_str){
@@ -122,6 +106,11 @@ void UART1TransmitBytes (uint8_t *tx_str){
 //Enter specific test mode, number ot the mode as parameter
 //IO8/RB7 need to provide 7 pulses with length of 100uS each
 void ASIC_EnterTestMode(uint8_t mode){
+    ASIC_VDD_SetHigh();//Power up the ASIC
+    __delay_ms(25);  //wait to stabilize Vdd
+    VBST_SetHigh();  //5V to pin Vbst
+    __delay_ms(25);  //wait to stabilize Vbst 
+    IRCAP_SetHigh();  //5V to pin IRCAP
     SW1_SetHigh();//TEST2 to VDD
     __delay_us(2);
     for (int i=1; i<=mode; i++){
@@ -150,10 +139,6 @@ void ASIC_SerialRead(void){
     uint8_t pin_status;
     int dec_value;
     int base_value = 1;
-    ASIC_VDD_SetHigh();//Power up the ASIC
-    __delay_ms(25);  //wait to stabilize Vdd
-    VBST_SetHigh();  //5V to pin Vbst
-    __delay_ms(25);  //wait to stabilize Vbst
     ASIC_EnterTestMode(7); //Call test mode 7
     __delay_us(100); //as per datasheet
     UART1_Write(0x44);//Response to the PC always start with 0x44
@@ -181,16 +166,13 @@ void ASIC_SerialRead(void){
     ASIC_VDD_SetLow(); //Power off the ASIC
     VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
     }
 
 
 void ASIC_SerialWrite(void){
-    uint8_t buffer_count = 0;
 //Function to serial write parameters to ASIC via serial
-    ASIC_VDD_SetHigh();//Power up the ASIC
-    __delay_ms(25);  //wait to stabilize Vdd
-    VBST_SetHigh();  //5V to pin Vbst
-    __delay_ms(25);  //wait to stabilize Vbst
+    uint8_t buffer_count = 0; //ASIC shift register buffer size is 44 bit max
     ASIC_EnterTestMode(7); //Call test mode 7
     __delay_us(100); //as per datasheet
     for (int byte_number=2; byte_number<=7; byte_number++){  //Get byte from the array with data
@@ -215,11 +197,35 @@ void ASIC_SerialWrite(void){
     UART1_Write(0x4b);  //Let PC knows data are saved
     
     ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow() //Turn off Vbst
+    VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
 }
 
-
+void ASIC_ChamberTestLimitsCheck(void){
+    uint8_t pin_status = 0;
+    ASIC_VDD_SetHigh();//Power up the ASIC
+    __delay_ms(25);  //wait to stabilize Vdd
+    VBST_SetHigh();  //5V to pin Vbst
+    __delay_ms(25);  //wait to stabilize Vbst
+    
+    ASIC_EnterTestMode(12); //Call test mode T12
+    __delay_us(100); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(1);
+    pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    __delay_us(100);
+    
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
+    if (pin_status){
+        UART1_Write(0x4e);
+    }
+}
 /*
                          Main application
  */
@@ -237,7 +243,7 @@ int main(void)
 //      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
         __delay_ms(30);
 //      Begin handling asic command
-        if ((count == 2)||(count==8)){
+        if ((count == 2)||(count==8)){  //2 bytes command for read, 2+6 bytes command and data to write
 //      Incoming sequence array contains command from PC software and data for ASIC
 //      Copy incoming sequence to asic_command array for further manipulation  
             memcpy(asic_command,incoming_seq, sizeof(asic_command));            
@@ -251,6 +257,12 @@ int main(void)
                 ASIC_SerialWrite();
             }
             
+        }
+        if (count == 3){  //3 bytes commands for limits check
+            memcpy(asic_command,incoming_seq, sizeof(asic_command));
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x43)){
+                ASIC_ChamberTestLimitsCheck();
+            }
         }
         count=0;
 //      Empty incoming sequence array for next command                    
