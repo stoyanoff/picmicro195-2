@@ -205,7 +205,28 @@ void ASIC_SerialWrite(void){
     ASIC_PowerDown();
 }
 
-void ASIC_NormalLimCheck(){
+void ASIC_LimitsCheck(uint8_t test_mode){
+    uint8_t HB_pin_status = 0;    
+    ASIC_EnterTestMode(test_mode); //Call test mode T12
+    __delay_us(120); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(1);
+    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    __delay_us(100);
+    
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
+    if (!HB_pin_status){
+        UART1_Write(0x4e);
+    }
+    ASIC_PowerDown();    
+}
+
+void ASIC_NormalLimCheck(void){
     uint8_t HB_pin_status = 0;    
     ASIC_EnterTestMode(9); //Call test mode T12
     __delay_us(120); //as per datasheet
@@ -226,7 +247,7 @@ void ASIC_NormalLimCheck(){
     ASIC_PowerDown();    
 }
 
-void ASIC_HystLimCheck(){
+void ASIC_HystLimCheck(void){
     uint8_t HB_pin_status = 0;    
     ASIC_EnterTestMode(10); //Call test mode T12
     __delay_us(120); //as per datasheet
@@ -328,16 +349,20 @@ int main(void)
         if (count == 3){  //3 bytes commands for limits check
             memcpy(asic_command,incoming_seq, sizeof(asic_command));
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x43)){
-                ASIC_ChamberTestLimitsCheck();
+                ASIC_LimitsCheck(12);
+//                ASIC_ChamberTestLimitsCheck();
             }
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x42)){
-                ASIC_HushLimCheck();
+                ASIC_LimitsCheck(11);
+//                ASIC_HushLimCheck();
             }
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x41)){
-                ASIC_HystLimCheck();
+                ASIC_LimitsCheck(10);
+//                ASIC_HystLimCheck();
             }
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x39)){
-                ASIC_NormalLimCheck();
+                ASIC_LimitsCheck(9);
+//                ASIC_NormalLimCheck();
             }            
         }
         count=0;
