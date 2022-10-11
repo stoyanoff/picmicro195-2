@@ -103,16 +103,26 @@ void UART1TransmitBytes (uint8_t *tx_str){
     }
 }
 
-//Enter specific test mode, number of the mode as parameter
-//IO8/RB7 need to provide 7 pulses with length of 100uS each
-void ASIC_EnterTestMode(uint8_t mode){
+void ASIC_PowerUp() {
     ASIC_VDD_SetHigh();//Power up the ASIC
     __delay_ms(25);  //wait to stabilize Vdd
     VBST_SetHigh();  //5V to pin Vbst
     __delay_ms(25);  //wait to stabilize Vbst 
     IRCAP_SetHigh();  //5V to pin IRCAP
     SW1_SetHigh();//TEST2 to VDD
-    __delay_us(2);
+    __delay_us(2);    
+}
+
+void ASIC_PowerDown() {
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP     
+}
+//Enter specific test mode, number of the mode as parameter
+//IO8/RB7 need to provide 7 pulses with length of 100uS each
+void ASIC_EnterTestMode(uint8_t mode){
+    ASIC_PowerUp();
     for (int i=1; i<=mode; i++){
         TEST5_SetHigh();
         __delay_us(100);   //min PW3 = 100uS
@@ -136,7 +146,7 @@ void UART1_Receive_CallBack(void){
 //After entering test mode 7, IO6RB3 need to provide clock with period min 20uS
 //and pulse width of 10uS, while IO10/RB11 need to provide pulses for each 1 in the bytes    
 void ASIC_SerialRead(void){
-    uint8_t pin_status;
+    uint8_t HB_SerialOut_status;
     int dec_value;
     int base_value = 1;
     ASIC_EnterTestMode(7); //Call test mode 7
@@ -147,11 +157,11 @@ void ASIC_SerialRead(void){
             //need to pulse FEED pin 8 times to collect 8 bits to form 1 byte
             //RB3 is FEED        
             FEED_SetHigh();
-            pin_status=HB_GetValue(); //Get value on pin HB
+            HB_SerialOut_status=HB_GetValue(); //Get value on pin HB
             __delay_us(17);
             FEED_SetLow();
             __delay_us(20);
-            dec_value +=base_value*pin_status; //converting binary to decimal value
+            dec_value +=base_value*HB_SerialOut_status; //converting binary to decimal value
             base_value=base_value*2; //2^î
         }
         UART1_Write(dec_value);  //Send current byte
@@ -162,11 +172,7 @@ void ASIC_SerialRead(void){
             Nop();
         }
 }       
-        
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
+    ASIC_PowerDown();
     }
 
 
@@ -196,18 +202,36 @@ void ASIC_SerialWrite(void){
     IO_SetLow();
     UART1_Write(0x4b);  //Let PC knows data are saved
     
+    ASIC_PowerDown();
+}
+
+void ASIC_HushLimCheck (void) {
+    uint8_t HB_pin_status = 0;    
+    ASIC_EnterTestMode(11); //Call test mode T12
+    __delay_us(120); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(1);
+    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    __delay_us(100);
+    
     ASIC_VDD_SetLow(); //Power off the ASIC
     VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
     IRCAP_SetLow();  //turn off IRCAP 
+    if (!HB_pin_status){
+        UART1_Write(0x4e);
+    }
+    ASIC_PowerDown();
 }
 
 void ASIC_ChamberTestLimitsCheck(void){
-    uint8_t pin_status = 0;
-    ASIC_VDD_SetHigh();//Power up the ASIC
-    __delay_ms(25);  //wait to stabilize Vdd
-    VBST_SetHigh();  //5V to pin Vbst
-    __delay_ms(25);  //wait to stabilize Vbst
+    uint8_t HB_pin_status = 0;
+//    ASIC_VDD_SetHigh();//Power up the ASIC
+//    __delay_ms(25);  //wait to stabilize Vdd
+//    VBST_SetHigh();  //5V to pin Vbst
+//    __delay_ms(25);  //wait to stabilize Vbst
     
     ASIC_EnterTestMode(12); //Call test mode T12
     __delay_us(120); //as per datasheet
@@ -215,16 +239,17 @@ void ASIC_ChamberTestLimitsCheck(void){
     __delay_ms(2);
     FEED_SetLow();
     __delay_us(1);
-    pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
     __delay_us(100);
     
     ASIC_VDD_SetLow(); //Power off the ASIC
     VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
     IRCAP_SetLow();  //turn off IRCAP 
-    if (!pin_status){
+    if (!HB_pin_status){
         UART1_Write(0x4e);
     }
+    ASIC_PowerDown();
 }
 /*
                          Main application
@@ -263,12 +288,15 @@ int main(void)
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x43)){
                 ASIC_ChamberTestLimitsCheck();
             }
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x42)){
+                ASIC_HushLimCheck();
+            }
         }
         count=0;
 //      Empty incoming sequence array for next command                    
             memset(incoming_seq,0,sizeof(incoming_seq));
 
-        ASIC_VDD_SetLow(); //Power down Vdd, just in case
+        ASIC_PowerDown(); //All voltages to ASIC goes down, just in case
 
     }; //end of Loop
 }; //End of main
