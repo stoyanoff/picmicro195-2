@@ -103,7 +103,7 @@ void UART1TransmitBytes (uint8_t *tx_str){
     }
 }
 
-//Enter specific test mode, number ot the mode as parameter
+//Enter specific test mode, number of the mode as parameter
 //IO8/RB7 need to provide 7 pulses with length of 100uS each
 void ASIC_EnterTestMode(uint8_t mode){
     ASIC_VDD_SetHigh();//Power up the ASIC
@@ -210,7 +210,7 @@ void ASIC_ChamberTestLimitsCheck(void){
     __delay_ms(25);  //wait to stabilize Vbst
     
     ASIC_EnterTestMode(12); //Call test mode T12
-    __delay_us(100); //as per datasheet
+    __delay_us(120); //as per datasheet
     FEED_SetHigh();
     __delay_ms(2);
     FEED_SetLow();
@@ -222,7 +222,7 @@ void ASIC_ChamberTestLimitsCheck(void){
     VBST_SetLow(); //Turn off Vbst
     SW1_SetLow();//TEST2 to VSS
     IRCAP_SetLow();  //turn off IRCAP 
-    if (pin_status){
+    if (!pin_status){
         UART1_Write(0x4e);
     }
 }
