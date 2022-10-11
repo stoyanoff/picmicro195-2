@@ -205,9 +205,30 @@ void ASIC_SerialWrite(void){
     ASIC_PowerDown();
 }
 
-void ASIC_LimitsCheck(uint8_t test_mode){
+void ASIC_ChamberMonitorLimitSet(void){  //Mode T8
     uint8_t HB_pin_status = 0;    
-    ASIC_EnterTestMode(test_mode); //Call test mode T12
+    ASIC_EnterTestMode(8); //Call test mode T8
+    __delay_us(120); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(100);
+    IO_SetHigh();
+    __delay_ms(40);
+    IO_SetLow();
+    HB_pin_status = HB_GetValue();  //read HB, if 0 no alarm
+    __delay_us(100);
+    if (!HB_pin_status){
+        UART1_Write(0x44);
+    }
+    ASIC_PowerDown();
+    __delay_ms(33);
+    ASIC_SerialRead();
+}
+
+void ASIC_LimitsCheck(uint8_t test_mode){  //Modes T12, T11, T10, T9
+    uint8_t HB_pin_status = 0;    
+    ASIC_EnterTestMode(test_mode); //Call test mode depends of PC software command]
     __delay_us(120); //as per datasheet
     FEED_SetHigh();
     __delay_ms(2);
@@ -220,9 +241,9 @@ void ASIC_LimitsCheck(uint8_t test_mode){
     ASIC_PowerDown();    
 }
 
-//void ASIC_NormalLimCheck(void){
+//void ASIC_NormalLimCheck(void){ //Mode T9
 //    uint8_t HB_pin_status = 0;    
-//    ASIC_EnterTestMode(9); //Call test mode T12
+//    ASIC_EnterTestMode(9); //Call test mode T9
 //    __delay_us(120); //as per datasheet
 //    FEED_SetHigh();
 //    __delay_ms(2);
@@ -235,9 +256,9 @@ void ASIC_LimitsCheck(uint8_t test_mode){
 //    ASIC_PowerDown();    
 //}
 //
-//void ASIC_HystLimCheck(void){
+//void ASIC_HystLimCheck(void){  //Mode T10
 //    uint8_t HB_pin_status = 0;    
-//    ASIC_EnterTestMode(10); //Call test mode T12
+//    ASIC_EnterTestMode(10); //Call test mode T10
 //    __delay_us(120); //as per datasheet
 //    FEED_SetHigh();
 //    __delay_ms(2);
@@ -250,9 +271,9 @@ void ASIC_LimitsCheck(uint8_t test_mode){
 //    ASIC_PowerDown();    
 //}
 //
-//void ASIC_HushLimCheck (void) {
+//void ASIC_HushLimCheck (void) {  //Mode T11
 //    uint8_t HB_pin_status = 0;    
-//    ASIC_EnterTestMode(11); //Call test mode T12
+//    ASIC_EnterTestMode(11); //Call test mode T11
 //    __delay_us(120); //as per datasheet
 //    FEED_SetHigh();
 //    __delay_ms(2);
@@ -266,7 +287,7 @@ void ASIC_LimitsCheck(uint8_t test_mode){
 //    ASIC_PowerDown();
 //}
 //
-//void ASIC_ChamberTestLimitsCheck(void){
+//void ASIC_ChamberTestLimitsCheck(void){  //Mode T12
 //    uint8_t HB_pin_status = 0;  
 //    ASIC_EnterTestMode(12); //Call test mode T12
 //    __delay_us(120); //as per datasheet
@@ -302,7 +323,7 @@ int main(void)
 //      PORTBbits.RB15 ^=1;  //Just for testing - toggle LED4
         __delay_ms(30);
 //      Begin handling asic command
-        if ((count == 2)||(count==8)){  //2 bytes command for read, 2+6 bytes command and data to write
+        if ((count == 2)||(count==3)||(count==5)||(count==8)){  //2 bytes command for read, 2+6 bytes command and data to write
 //      Incoming sequence array contains command from PC software and data for ASIC
 //      Copy incoming sequence to asic_command array for further manipulation  
             memcpy(asic_command,incoming_seq, sizeof(asic_command));            
@@ -335,6 +356,11 @@ int main(void)
                 ASIC_LimitsCheck(9);
 //                ASIC_NormalLimCheck();
             }            
+        }
+        if (count==5){  //5 bytes command for chamber monitor limit set
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x38)&&(asic_command[3]==0x61)&&(asic_command[4]==0x61)){
+                ASIC_ChamberMonitorLimitSet();
+            }
         }
         count=0;
 //      Empty incoming sequence array for next command                    
