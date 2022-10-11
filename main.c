@@ -212,111 +212,82 @@ void ASIC_LimitsCheck(uint8_t test_mode){
     FEED_SetHigh();
     __delay_ms(2);
     FEED_SetLow();
-    __delay_us(1);
-    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    HB_pin_status = HB_GetValue();  //read HB, if 0 no alarm
     __delay_us(100);
-    
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
     if (!HB_pin_status){
         UART1_Write(0x4e);
     }
     ASIC_PowerDown();    
 }
 
-void ASIC_NormalLimCheck(void){
-    uint8_t HB_pin_status = 0;    
-    ASIC_EnterTestMode(9); //Call test mode T12
-    __delay_us(120); //as per datasheet
-    FEED_SetHigh();
-    __delay_ms(2);
-    FEED_SetLow();
-    __delay_us(1);
-    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
-    __delay_us(100);
-    
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
-    if (!HB_pin_status){
-        UART1_Write(0x4e);
-    }
-    ASIC_PowerDown();    
-}
-
-void ASIC_HystLimCheck(void){
-    uint8_t HB_pin_status = 0;    
-    ASIC_EnterTestMode(10); //Call test mode T12
-    __delay_us(120); //as per datasheet
-    FEED_SetHigh();
-    __delay_ms(2);
-    FEED_SetLow();
-    __delay_us(1);
-    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
-    __delay_us(100);
-    
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
-    if (!HB_pin_status){
-        UART1_Write(0x4e);
-    }
-    ASIC_PowerDown();    
-}
-
-void ASIC_HushLimCheck (void) {
-    uint8_t HB_pin_status = 0;    
-    ASIC_EnterTestMode(11); //Call test mode T12
-    __delay_us(120); //as per datasheet
-    FEED_SetHigh();
-    __delay_ms(2);
-    FEED_SetLow();
-    __delay_us(1);
-    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
-    __delay_us(100);
-    
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
-    if (!HB_pin_status){
-        UART1_Write(0x4e);
-    }
-    ASIC_PowerDown();
-}
-
-void ASIC_ChamberTestLimitsCheck(void){
-    uint8_t HB_pin_status = 0;
-//    ASIC_VDD_SetHigh();//Power up the ASIC
-//    __delay_ms(25);  //wait to stabilize Vdd
-//    VBST_SetHigh();  //5V to pin Vbst
-//    __delay_ms(25);  //wait to stabilize Vbst
-    
-    ASIC_EnterTestMode(12); //Call test mode T12
-    __delay_us(120); //as per datasheet
-    FEED_SetHigh();
-    __delay_ms(2);
-    FEED_SetLow();
-    __delay_us(1);
-    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
-    __delay_us(100);
-    
-    ASIC_VDD_SetLow(); //Power off the ASIC
-    VBST_SetLow(); //Turn off Vbst
-    SW1_SetLow();//TEST2 to VSS
-    IRCAP_SetLow();  //turn off IRCAP 
-    if (!HB_pin_status){
-        UART1_Write(0x4e);
-    }
-    ASIC_PowerDown();
-}
-/*
-                         Main application
- */
+//void ASIC_NormalLimCheck(void){
+//    uint8_t HB_pin_status = 0;    
+//    ASIC_EnterTestMode(9); //Call test mode T12
+//    __delay_us(120); //as per datasheet
+//    FEED_SetHigh();
+//    __delay_ms(2);
+//    FEED_SetLow();
+//    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+//    __delay_us(100);
+//    if (!HB_pin_status){
+//        UART1_Write(0x4e);
+//    }
+//    ASIC_PowerDown();    
+//}
+//
+//void ASIC_HystLimCheck(void){
+//    uint8_t HB_pin_status = 0;    
+//    ASIC_EnterTestMode(10); //Call test mode T12
+//    __delay_us(120); //as per datasheet
+//    FEED_SetHigh();
+//    __delay_ms(2);
+//    FEED_SetLow();
+//    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+//    __delay_us(100); 
+//    if (!HB_pin_status){
+//        UART1_Write(0x4e);
+//    }
+//    ASIC_PowerDown();    
+//}
+//
+//void ASIC_HushLimCheck (void) {
+//    uint8_t HB_pin_status = 0;    
+//    ASIC_EnterTestMode(11); //Call test mode T12
+//    __delay_us(120); //as per datasheet
+//    FEED_SetHigh();
+//    __delay_ms(2);
+//    FEED_SetLow();
+//    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+//    __delay_us(100);
+//    
+//    if (!HB_pin_status){
+//        UART1_Write(0x4e);
+//    }
+//    ASIC_PowerDown();
+//}
+//
+//void ASIC_ChamberTestLimitsCheck(void){
+//    uint8_t HB_pin_status = 0;  
+//    ASIC_EnterTestMode(12); //Call test mode T12
+//    __delay_us(120); //as per datasheet
+//    FEED_SetHigh();
+//    __delay_ms(2);
+//    FEED_SetLow();
+//    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+//    __delay_us(100);
+//    
+//    ASIC_VDD_SetLow(); //Power off the ASIC
+//    VBST_SetLow(); //Turn off Vbst
+//    SW1_SetLow();//TEST2 to VSS
+//    IRCAP_SetLow();  //turn off IRCAP 
+//    if (!HB_pin_status){
+//        UART1_Write(0x4e);
+//    }
+//    ASIC_PowerDown();
+//}
+///*
+//                         Main application
+// */
 int main(void)
 {   
     // initialize the device
