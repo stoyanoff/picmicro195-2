@@ -205,6 +205,48 @@ void ASIC_SerialWrite(void){
     ASIC_PowerDown();
 }
 
+void ASIC_NormalLimCheck(){
+    uint8_t HB_pin_status = 0;    
+    ASIC_EnterTestMode(9); //Call test mode T12
+    __delay_us(120); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(1);
+    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    __delay_us(100);
+    
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
+    if (!HB_pin_status){
+        UART1_Write(0x4e);
+    }
+    ASIC_PowerDown();    
+}
+
+void ASIC_HystLimCheck(){
+    uint8_t HB_pin_status = 0;    
+    ASIC_EnterTestMode(10); //Call test mode T12
+    __delay_us(120); //as per datasheet
+    FEED_SetHigh();
+    __delay_ms(2);
+    FEED_SetLow();
+    __delay_us(1);
+    HB_pin_status = HB_GetValue();  //read HB, if 1 no alarm
+    __delay_us(100);
+    
+    ASIC_VDD_SetLow(); //Power off the ASIC
+    VBST_SetLow(); //Turn off Vbst
+    SW1_SetLow();//TEST2 to VSS
+    IRCAP_SetLow();  //turn off IRCAP 
+    if (!HB_pin_status){
+        UART1_Write(0x4e);
+    }
+    ASIC_PowerDown();    
+}
+
 void ASIC_HushLimCheck (void) {
     uint8_t HB_pin_status = 0;    
     ASIC_EnterTestMode(11); //Call test mode T12
@@ -291,6 +333,12 @@ int main(void)
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x42)){
                 ASIC_HushLimCheck();
             }
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x41)){
+                ASIC_HystLimCheck();
+            }
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x39)){
+                ASIC_NormalLimCheck();
+            }            
         }
         count=0;
 //      Empty incoming sequence array for next command                    
@@ -303,4 +351,3 @@ int main(void)
     /**
  End of File
 */
-
