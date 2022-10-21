@@ -110,7 +110,7 @@ void ASIC_PowerUp() {
     __delay_ms(25);  //wait to stabilize Vbst 
     IRCAP_SetHigh();  //5V to pin IRCAP
     SW1_SetHigh();//TEST2 to VDD
-    __delay_us(2);    
+    __delay_us(5);    
 }
 
 void ASIC_PowerDown() {
@@ -119,6 +119,7 @@ void ASIC_PowerDown() {
     SW1_SetLow();//TEST2 to VSS
     IRCAP_SetLow();  //turn off IRCAP     
 }
+
 //Enter specific test mode, number of the mode as parameter
 //IO8/RB7 need to provide 7 pulses with length of 100uS each
 void ASIC_EnterTestMode(uint8_t mode){
@@ -139,8 +140,91 @@ void UART1_Receive_CallBack(void){
     ch = U1RXREG;
     incoming_seq[count++] = ch;
     if (count > 20)count = 0;
-
 }
+   
+
+void ASIC_StartCalibration(void){
+    uint8_t HB_Status=0;
+    uint8_t integrator_level=0;
+    for (int test_mode=3; test_mode<=6; test_mode++) {
+        if (test_mode==3){
+            ASIC_EnterTestMode(test_mode);
+        }//end if
+        else {
+            TEST5_SetHigh();  //Next calibration mode, page 21 p.5, 6, 7
+            __delay_us(100);   //min PW3 = 100uS
+            TEST5_SetLow();
+            __delay_us(20);    //min T2 = 120uS            
+        }//end else
+        
+        __delay_ms(2);  //Wait to pass transition process on
+        
+        /*For Testing! only!*/
+//        while (integrator_level<=63){
+//        FEED_SetHigh();
+//        __delay_ms(1);
+////        IO_SetHigh();
+////        __delay_ms(2);
+////        IO_SetLow();
+////        __delay_ms(2);
+//        FEED_SetLow();
+//        __delay_ms(1);
+//        
+//        integrator_level++;
+//        }
+
+
+        // Like datasheet diagram        
+//         __delay_ms(2);
+//        FEED_SetHigh();
+//        IO_SetHigh();
+//        __delay_ms(2);
+//        IO_SetLow();
+//        __delay_ms(1);
+//        IO_SetHigh();
+//        __delay_ms(2);
+//        IO_SetLow();
+//        FEED_SetLow();
+//        __delay_ms(1);
+        
+        while (integrator_level<=63) {
+            
+            FEED_SetHigh();         //Increase GAMP
+            IO_SetHigh();            //Start measurement
+            __delay_ms(2);
+            IO_SetLow();            
+            FEED_SetLow();
+            HB_Status=HB_GetValue();    //Get status of HB pin
+
+
+            __delay_ms(1);
+            
+            IO_SetHigh();            //Latch last GAMP value
+            __delay_ms(2);
+            IO_SetLow();            
+            
+            if (HB_Status==0){      //high if Gamp < IntegOut; low if Gamp > IntegOut
+                HB_Status=0;
+                break;}             //If measured level is lower than comparator level, exit the loop
+            
+            __delay_ms(1);            
+
+            integrator_level++;
+//            __delay_ms(1);
+        } //end while
+        integrator_level=0;
+   
+    
+        IO_SetHigh();               //After T6 save latched values to EEPROM
+        __delay_ms(12);
+        IO_SetLow();
+        
+    
+
+    } //end for
+    UART1_Write(0x55);              //Read the values, saved in ASIC's EEPROM
+}//end function
+
 
 //Function to serial read parameters from ASIC via serial
 //After entering test mode 7, IO6RB3 need to provide clock with period min 20uS
@@ -183,16 +267,26 @@ void ASIC_SerialWrite(void){
     __delay_us(100); //as per datasheet
     for (int byte_number=2; byte_number<=7; byte_number++){  //Get byte from the array with data
         for (int BitNumber=7; BitNumber>=0; BitNumber-- ){  //Get each single bit of the current byte
-            FEED_SetHigh();
-            if (((asic_command[byte_number]>>BitNumber) & 1) && (buffer_count<=44)) {  //if bit is 1, TEST data set to HIGH
+//            FEED_SetHigh();
+            if (((asic_command[byte_number]>>BitNumber) & 1) && (buffer_count<=43)) {  //if bit is 1, TEST data set to HIGH
                 TEST3_3_SetHigh();
+                __delay_us(5);
+                FEED_SetHigh();
+                __delay_us(20);
+                FEED_SetLow();                
+                __delay_us(5);               
             }
-            else {  //else TEST data is 0
+            else if (buffer_count>43){  //else TEST data is 0
                 TEST3_3_SetLow();
+                __delay_us(5);
+                FEED_SetHigh();
+                __delay_us(20);
+                FEED_SetLow();                
+                __delay_us(5);                 
             }
-            __delay_us(17);
-            FEED_SetLow();
-            __delay_us(20);            
+//            __delay_us(17);
+//            FEED_SetLow();
+//            __delay_us(20);            
             buffer_count++;  //need to save 44 bits, but 6 bytes are 48, so we are stop writing at bit 44 
         }
     }
@@ -205,25 +299,66 @@ void ASIC_SerialWrite(void){
     ASIC_PowerDown();
 }
 
+void ASIC_T2UserSelections (void) {
+    //Function to write user selections parameters to ASIC via mode T2 (serial, 14 bit))
+    uint8_t buffer_count = 0; //ASIC T2 mode shift register buffer size is 14 bit max
+    ASIC_EnterTestMode(2); //Call test mode 7
+    __delay_us(100); //as per datasheet
+    
+    for (int byte_number=3; byte_number<=4; byte_number++){  //Get byte from the array with data
+               for (int BitNumber=7; BitNumber>=0; BitNumber-- ){  //Get each single bit of the current byte
+//            FEED_SetHigh();
+            if (((asic_command[byte_number]>>BitNumber) & 1) && (buffer_count<=13)) {  //if bit is 1, TEST data set to HIGH
+                TEST3_3_SetHigh();
+                __delay_us(5);
+                FEED_SetHigh();
+                __delay_us(20);
+                FEED_SetLow();                
+                __delay_us(5);               
+            }
+            else if ((buffer_count<=13)){  //else TEST data is 0
+                TEST3_3_SetLow();
+                __delay_us(5);
+                FEED_SetHigh();
+                __delay_us(20);
+                FEED_SetLow();                
+                __delay_us(5);                 
+            }
+//            __delay_us(17);
+//            FEED_SetLow();
+//            __delay_us(20);            
+            buffer_count++;  //need to save 44 bits, but 6 bytes are 48, so we are stop writing at bit 44 
+        }
+    }
+    __delay_us(300);
+    IO_SetHigh();   //Latch data to ASIC's memory
+    __delay_ms(20);
+    IO_SetLow();
+    UART1_Write(0x44);  //Let PC knows data are saved
+    
+    ASIC_PowerDown();    
+}
+
 void ASIC_ChamberMonitorLimitSet(void){  //Mode T8
     uint8_t HB_pin_status = 0;    
     ASIC_EnterTestMode(8); //Call test mode T8
-    __delay_us(120); //as per datasheet
+    __delay_us(10); //as per datasheet page 24 figure 4-6
     FEED_SetHigh();
-    __delay_ms(2);
+    __delay_ms(3);
     FEED_SetLow();
-    __delay_us(100);
+    __delay_ms(100);
+    UART1_Write(0x44);
     IO_SetHigh();
     __delay_ms(40);
     IO_SetLow();
-    HB_pin_status = HB_GetValue();  //read HB, if 0 no alarm
-    __delay_us(100);
-    if (!HB_pin_status){
-        UART1_Write(0x44);
-    }
+//    HB_pin_status = HB_GetValue();  //read HB, if 0 no alarm
+//    __delay_us(100);
+//    if (!HB_pin_status){
+//    }
+
+    ASIC_SerialRead();    
+    __delay_ms(33);    
     ASIC_PowerDown();
-    __delay_ms(33);
-    ASIC_SerialRead();
 }
 
 void ASIC_LimitsCheck(uint8_t test_mode){  //Modes T12, T11, T10, T9
@@ -237,6 +372,9 @@ void ASIC_LimitsCheck(uint8_t test_mode){  //Modes T12, T11, T10, T9
     __delay_us(100);
     if (!HB_pin_status){
         UART1_Write(0x4e);
+        }
+    else {
+        UART1_Write(0x41);
     }
     ASIC_PowerDown();    
 }
@@ -309,7 +447,7 @@ void ASIC_LimitsCheck(uint8_t test_mode){  //Modes T12, T11, T10, T9
 ///*
 //                         Main application
 // */
-int main(void)
+void main(void)
 {   
     // initialize the device
     SYSTEM_Initialize();
@@ -355,12 +493,19 @@ int main(void)
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x39)){
                 ASIC_LimitsCheck(9);
 //                ASIC_NormalLimCheck();
+            }
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x36)){
+                ASIC_StartCalibration();
+//                ASIC_NormalLimCheck();
             }            
         }
         if (count==5){  //5 bytes command for chamber monitor limit set
             if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x38)&&(asic_command[3]==0x61)&&(asic_command[4]==0x61)){
                 ASIC_ChamberMonitorLimitSet();
             }
+            if ((asic_command[0]==0x54)&&(asic_command[1]==0x4d)&&(asic_command[2]==0x12)){
+                ASIC_T2UserSelections();
+            }            
         }
         count=0;
 //      Empty incoming sequence array for next command                    
